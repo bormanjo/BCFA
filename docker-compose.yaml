@@ -1,0 +1,9 @@
+version: "0.1"
+services:
+  host:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/code
+    tty: true
