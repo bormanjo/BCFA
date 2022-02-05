@@ -8,6 +8,6 @@ RUN apt install -y nodejs
 COPY . /code
 WORKDIR /code
 
-RUN npm install --save-dev hardhat
+RUN npm install
 
 ENTRYPOINT [ "/bin/bash" ]
