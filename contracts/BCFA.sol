@@ -1,14 +1,12 @@
 //SPDX-License-Identifier: AGPLv3
-pragma solidity ^0.7.0;
+pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
 import { ConstantFlowAgreementV1 } from "@superfluid-finance/ethereum-contracts/contracts/agreements/ConstantFlowAgreementV1.sol";
 
-import { SuperAppBase } from "@superfluid-finance/ethereum-contracts/contracts/apps/SuperAppBase.sol";
+import { ISuperfluidToken } from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluidToken.sol";
 
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-
-import "./LegCFA.sol";
 
 contract BCFA {
     address public _address_a = address(0);
@@ -24,15 +22,16 @@ contract BCFA {
     ConstantFlowAgreementV1 private _cfa_b1;    // B to BCFA
     ConstantFlowAgreementV1 private _cfa_b2;    // BCFA to B
 
-    ISuperToken public _token;
+    ISuperfluidToken public _token;
+
+    bool private _leg_b_initialized = false;
 
     constructor(
         ConstantFlowAgreementV1 cfa,
-        ISuperToken token,
+        ISuperfluidToken token,
         ERC20 dai,
         address receiver
-    ) 
-    public {
+    ) {
         // Check addresses
         require(address(cfa) != address(0));
         require(address(token) != address(0));
@@ -41,12 +40,7 @@ contract BCFA {
         require(address(receiver) == address(this));
 
         _address_a = msg.sender;
-        _address_b = address(0);
-
         _cfa_a1 = cfa;
-        _cfa_a2 = address(0);
-        _cfa_b1 = address(0);
-        _cfa_b2 = address(0);
 
         _token = token;
         _dai = dai;
@@ -57,21 +51,21 @@ contract BCFA {
         // BCFA confirms Alice has done this and routes a CFA back
 
         // Create a new flow back to Alice at the same flow rate
-        (,_flow_rate,,) = _cfa_a1.getFlow(token, _address_a, address(this));
+        (,_flowRate,,) = _cfa_a1.getFlow(token, _address_a, address(this));
         _cfa_a2 = new ConstantFlowAgreementV1();
         _cfa_a2.createFlow(token, _address_a, _flowRate, "0x");
     }
 
     function addLeg(
-        CosntantFlowAgreementV1 cfa,
-        ISuperToken token,
+        ConstantFlowAgreementV1 cfa,
+        ISuperfluidToken token,
         ERC20 dai,
         address receiver
     )
     public {
         // Can only call once
-        require(_address_b == address(0), "BCFA already initialized!");
-        require(msg.sender != address_a, "BCFA initialized with the same address");
+        require(!_leg_b_initialized, "BCFA already initialized!");
+        require(msg.sender != _address_a, "BCFA initialized with the same address");
         _address_b = msg.sender;
 
         // Check addresses
@@ -84,37 +78,36 @@ contract BCFA {
 
         // Dai + flowRate must match the initial leg
         require(_dai == dai);
-        (,flowRate,,) = _cfa_b1.getFlow(token, _address_b, address(this));
+        (,int96 flowRate,,) = _cfa_b1.getFlow(token, _address_b, address(this));
         require(_flowRate == flowRate);
 
         // Create a new flow back to Bob at the same flow rate
         _cfa_b2 = new ConstantFlowAgreementV1();
         _cfa_b2.createFlow(token, _address_b, _flowRate, "0x");
 
+        _leg_b_initialized = true;  // mark so this can only be run once
         flipCoin();
     }
 
-    function validateState() public {
+    function validateState() public view {
         // Check node A
         require(_address_a != address(0));
-        require(_cfa_a1 != address(0));
-        require(_cfa_a2 != address(0));
+        require(address(_cfa_a1) != address(0));
+        require(address(_cfa_a2) != address(0));
         // TODO: confirm state == solvent
 
         // Check node B
         require(_address_a != address(0));
-        require(_cfa_b1 != address(0));
-        require(_cfa_b2 != address(0));
+        require(address(_cfa_b1) != address(0));
+        require(address(_cfa_b2) != address(0));
         // TODO: confirm state == solvent
     }
 
     function getFlowRateA() public view returns (int96 flowRate) {
-        int96 flowRate;
         (,flowRate,,) = _cfa_a2.getFlow(_token, address(this), _address_a);
     }
 
     function getFlowRateB() public view returns (int96 flowRate) {
-        int96 flowRate;
         (,flowRate,,) = _cfa_b2.getFlow(_token, address(this), _address_b);
     }
 
@@ -123,11 +116,11 @@ contract BCFA {
     }
 
     function isFlowingToA() public view returns (bool flowing) {
-        bool flowing = netFlowRate() > 0;
+        flowing = netFlowRate() > 0;
     }
 
     function isFlowingToB() public view returns (bool flowing) {
-        bool flowing = netFlowRate() < 0;
+        flowing = netFlowRate() < 0;
     }
 
     function _flowToA() private {
@@ -181,7 +174,7 @@ contract BCFA {
         require(elapsedTime >= 1 hours);
 
         // Get a pseudo-random boolean value
-        bool result = bool(uint(keccak256(block.difficulty, block.timestamp)) % 1);
+        bool result = 1 == uint(keccak256(abi.encodePacked(block.difficulty, block.timestamp))) % 1;
         if (result) {
             _flowToA();
         } else {
