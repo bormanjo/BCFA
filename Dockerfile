@@ -9,5 +9,6 @@ COPY . /code
 WORKDIR /code
 
 RUN npm install
+RUN apt install -y wget
 
 ENTRYPOINT [ "/bin/bash" ]
