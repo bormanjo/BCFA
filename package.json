@@ -15,5 +15,9 @@
     "ethereum-waffle": "^3.4.0",
     "ethers": "^5.5.4",
     "hardhat": "^2.8.3"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.4.2",
+    "@superfluid-finance/ethereum-contracts": "^1.0.0-rc.11"
   }
 }
