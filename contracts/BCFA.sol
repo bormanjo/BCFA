@@ -10,7 +10,7 @@ import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 import "./LegCFA.sol";
 
-contract BCFA is SuperAppBase {
+contract BCFA {
     address public _address_a = address(0);
     address public _address_b = address(0);
     ERC20 public _dai;
@@ -19,7 +19,6 @@ contract BCFA is SuperAppBase {
     uint256 public _lastRefresh = 0;
 
     // superfluid params
-    ISuperfluid private _host;
     ConstantFlowAgreementV1 private _cfa_a1;    // A to BCFA
     ConstantFlowAgreementV1 private _cfa_a2;    // BCFA to A
     ConstantFlowAgreementV1 private _cfa_b1;    // B to BCFA
@@ -28,7 +27,6 @@ contract BCFA is SuperAppBase {
     ISuperToken public _token;
 
     constructor(
-        ISuperfluid host,
         ConstantFlowAgreementV1 cfa,
         ISuperToken token,
         ERC20 dai,
@@ -36,14 +34,12 @@ contract BCFA is SuperAppBase {
     ) 
     public {
         // Check addresses
-        require(address(host) != address(0));
         require(address(cfa) != address(0));
         require(address(token) != address(0));
 
         // BCFA starts by being the receiver of a CFA
         require(address(receiver) == address(this));
 
-        _host = host;
         _address_a = msg.sender;
         _address_b = address(0);
 
