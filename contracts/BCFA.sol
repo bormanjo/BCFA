@@ -59,7 +59,7 @@ contract BCFA {
         // Create a new flow back to Alice at the same flow rate
         (,_flow_rate,,) = _cfa_a1.getFlow(token, _address_a, address(this));
         _cfa_a2 = new ConstantFlowAgreementV1();
-        _cfa_a2.createFlow(token, _address_a, _flowRate, "");
+        _cfa_a2.createFlow(token, _address_a, _flowRate, "0x");
     }
 
     function addLeg(
@@ -89,7 +89,7 @@ contract BCFA {
 
         // Create a new flow back to Bob at the same flow rate
         _cfa_b2 = new ConstantFlowAgreementV1();
-        _cfa_b2.createFlow(token, _address_b, _flowRate, "");
+        _cfa_b2.createFlow(token, _address_b, _flowRate, "0x");
 
         flipCoin();
     }
@@ -134,9 +134,9 @@ contract BCFA {
         // if not already flowing to A2, update the flow rate
         if (netFlowRate() <= 0) {
             // downgrade B2 flow rate
-            _cfa_b2.updateFlow(_token, _address_b, 1, "");
+            _cfa_b2.updateFlow(_token, _address_b, 1, "0x");
             // upgrade A2 flow rate
-            _cfa_a2.updateFlow(_token, _address_a, (2 * _flowRate) - 1, "");
+            _cfa_a2.updateFlow(_token, _address_a, (2 * _flowRate) - 1, "0x");
 
             // TODO: emit newFlowDirection
         }
@@ -146,9 +146,9 @@ contract BCFA {
         // update both flows if 
         if (netFlowRate() >= 0) {
             // downgrade A2 flow rate
-            _cfa_a2.updateFlow(_token, _address_a, 1, "");
+            _cfa_a2.updateFlow(_token, _address_a, 1, "0x");
             // upgrade B2 flow rate
-            _cfa_b2.updateFlow(_token, _address_b, (2 * _flowRate) - 1, "");
+            _cfa_b2.updateFlow(_token, _address_b, (2 * _flowRate) - 1, "0x");
 
             // TODO: emit newFlowDirection
         }
